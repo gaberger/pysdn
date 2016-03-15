@@ -62,13 +62,17 @@ from pysdn.controller.inventory import (Inventory,
 
 class Controller():
     """ Class that represents a Controller device. """
-    def __init__(self, ipAddr, portNum, adminName, adminPassword, timeout=5):
+    def __init__(self, ipAddr, portNum, adminName, adminPassword, debug=False, timeout=5):
         """Initializes this object properties."""
         self.ipAddr = ipAddr
         self.portNum = portNum
         self.adminName = adminName
         self.adminPassword = adminPassword
-        self.timeout = timeout
+        if not isinstance(timeout, int):
+            self.timeout = 5
+        else:
+            self.timeout = timeout
+        self.debug = debug
 
     def to_string(self):
         """ Returns string representation of this object. """
@@ -88,7 +92,7 @@ class Controller():
         return json.dumps(d, default=lambda o: o.__dict__, sort_keys=True,
                           indent=4)
 
-    def http_get_request(self, url, data, headers, timeout=None):
+    def http_get_request(self, url, data, headers):
         """ Sends HTTP GET request to a remote server
             and returns the response.
 
@@ -97,7 +101,6 @@ class Controller():
         :param string data: The data to include in the body of the request.
                             Typically set to None.
         :param dict headers: The headers to include in the request.
-        :param string timeout: Pass a timeout for longlived queries
         :return: The response from the http request.
         :rtype: None or `requests.response`
             <http://docs.python-requests.org/en/latest/api/#requests.Response>
@@ -105,20 +108,19 @@ class Controller():
         """
 
         resp = None
-        if timeout is None:
-            timeout = self.timeout
-
         try:
             resp = requests.get(url,
                                 auth=HTTPBasicAuth(self.adminName,
                                                    self.adminPassword),
-                                data=data, headers=headers, timeout=timeout)
+                                data=data, headers=headers, timeout=self.timeout)
+            if self.debug is True:
+                print url
         except (ConnectionError, Timeout) as e:
             print "Error: " + repr(e)
 
         return (resp)
 
-    def http_post_request(self, url, data, headers,timeout=None):
+    def http_post_request(self, url, data, headers):
         """ Sends HTTP POST request to a remote server
             and returns the response.
 
@@ -133,15 +135,13 @@ class Controller():
 
         """
         resp = None
-        if timeout is None:
-            timeout = self.timeout
 
         try:
             resp = requests.post(url,
                                  auth=HTTPBasicAuth(self.adminName,
                                                     self.adminPassword),
                                  data=data, headers=headers,
-                                 timeout=timeout)
+                                 timeout=self.timeout)
         except (ConnectionError, Timeout) as e:
             print "Error: " + repr(e)
 
@@ -368,7 +368,7 @@ class Controller():
                 status.set_status(STATUS.DATA_NOT_FOUND, resp)
         else:
             status.set_status(STATUS.HTTP_ERROR, resp)
-        #TODO MAKE THIS BOOLEAN OR CREATE A PREDICATE WRAPPER
+        ##TODO MAKE THIS BOOLEAN OR CREATE A PREDICATE WRAPPER
         return Result(status, None)
 
     def get_all_nodes_in_config(self):
@@ -1128,7 +1128,7 @@ class Controller():
         url = templateUrl.format(self.ipAddr, self.portNum)
         headers = {'content-type': 'application/xml',
                    'accept': 'application/xml'}
-        resp = self.http_post_request(url, payload, headers, timeout=None)
+        resp = self.http_post_request(url, payload, headers)
         if(resp is None):
             status.set_status(STATUS.CONN_ERROR)
         elif(resp.content is None):
@@ -1219,7 +1219,7 @@ class Controller():
         headers = {'content-type': 'application/xml',
                    'accept': 'application/xml'}
 
-        resp = self.http_post_request(url, payload, headers, timeout=None)
+        resp = self.http_post_request(url, payload, headers)
         if(resp is None):
             status.set_status(STATUS.CONN_ERROR)
         elif(resp.content is None):

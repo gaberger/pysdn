@@ -214,7 +214,7 @@ class NOS(object):
             modelref = templateModelRef
             url = session.get_ext_mount_config_url(name)
             url += modelref
-            resp = session.http_get_request(url, data=None, headers=None, timeout=timeout)
+            resp = session.http_get_request(url, data=None, headers=None)
             if(resp is None):
                 status.set_status(STATUS.CONN_ERROR)
             elif(resp.content is None):
@@ -238,7 +238,7 @@ class NOS(object):
         modelref = templateModelRef
         url = session.get_ext_mount_config_url(name)
         url += modelref
-        resp = session.http_get_request(url, None, headers=headers, timeout=None)
+        resp = session.http_get_request(url, None, headers=headers)
         if(resp is None):
             status.set_status(STATUS.CONN_ERROR)
         elif(resp.content is None):
@@ -263,7 +263,7 @@ class NOS(object):
         url = session.get_ext_mount_config_url(name)
         url += modelref
         payload = {"vlan": {"name": vlanid}}
-        resp = session.http_post_request(url, json.dumps(payload), headers=headers, timeout=None)
+        resp = session.http_post_request(url, json.dumps(payload), headers=headers)
         if(resp is None):
             status.set_status(STATUS.CONN_ERROR)
         elif(resp.content is None):
